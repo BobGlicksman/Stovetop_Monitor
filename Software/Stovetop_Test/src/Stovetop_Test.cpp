@@ -16,6 +16,7 @@
   Author:  Bob Glicksman
   Date: 4/30/26
   Version 1.0 - Initial release for testing
+  Version 1.1 - Added LED and buzzer test function to setup(); 67/29/26
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
@@ -27,6 +28,11 @@
 
 // Include MLX90614 library
 #include <Adafruit_MLX90614.h>
+
+#define GREEN_LED D4
+#define YELLOW_LED S4
+#define RED_LED S3
+#define BUZZER D2
 
 // define interval for data recording
 #define RECORDING_INTERVAL 15000 // take data every 15 seconds
@@ -51,9 +57,32 @@ void printData(float time)
 
 } // end of printData()
 
+void testLEDs(int numTests)
+{
+  for (int i = 0; i < numTests; i++)
+  {
+    digitalWrite(GREEN_LED, HIGH);
+    digitalWrite(YELLOW_LED, HIGH);
+    digitalWrite(RED_LED, HIGH);
+    digitalWrite(BUZZER, HIGH);
+    delay(300);
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(YELLOW_LED, LOW);
+    digitalWrite(RED_LED, LOW);
+    digitalWrite(BUZZER, LOW);
+    delay(300);
+  }
+} // end of testLEDs()
+
 void setup()
 {
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(YELLOW_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+
   Serial.begin(9600);
+  testLEDs(5); // test the LEDs and buzzer 3 times
 
   delay(5000); // wait for console opening// wait to open a serial monitor
   Serial.println("Stovetop Sensor test");
