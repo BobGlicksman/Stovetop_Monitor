@@ -33,6 +33,7 @@
 #define YELLOW_LED S4
 #define RED_LED S3
 #define BUZZER D2
+#define ALARM_RESET D16
 
 // define interval for data recording
 #define RECORDING_INTERVAL 15000 // take data every 15 seconds
@@ -80,6 +81,7 @@ void setup()
   pinMode(YELLOW_LED, OUTPUT);
   pinMode(RED_LED, OUTPUT);
   pinMode(BUZZER, OUTPUT);
+  pinMode(ALARM_RESET, INPUT_PULLUP);
 
   Serial.begin(9600);
   testLEDs(5); // test the LEDs and buzzer 3 times
@@ -105,6 +107,11 @@ void loop()
     printData(intervalMinutes);
 
     loggingTimeMillis = millis();
+  }
+
+  if (digitalRead(ALARM_RESET) == LOW)
+  {
+    testLEDs(4); // test the LEDs and buzzer 3 times
   }
 
 } // end of loop()
