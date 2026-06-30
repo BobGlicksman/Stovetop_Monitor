@@ -16,7 +16,7 @@
   Author:  Bob Glicksman
   Date: 4/30/26
   Version 1.0 - Initial release for testing
-  Version 1.1 - Added LED and buzzer test function to setup(); 67/29/26
+  Version 1.1 - Added LED and buzzer test function to setup(); 6/29/26
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
@@ -84,9 +84,9 @@ void setup()
   pinMode(ALARM_RESET, INPUT_PULLUP);
 
   Serial.begin(9600);
-  testLEDs(5); // test the LEDs and buzzer 3 times
+  testLEDs(5); // test the LEDs and buzzer 5 times
 
-  delay(5000); // wait for console opening// wait to open a serial monitor
+  delay(5000); // wait to open a serial monitor
   Serial.println("Stovetop Sensor test");
   mlx.begin();
   Serial.println("Ready for testing ...");
@@ -109,9 +109,10 @@ void loop()
     loggingTimeMillis = millis();
   }
 
+  // the following code is just here to test the alarm reset button
   if (digitalRead(ALARM_RESET) == LOW)
   {
-    testLEDs(4); // test the LEDs and buzzer 3 times
+    testLEDs(4); // test the LEDs and buzzer 4 times
   }
 
 } // end of loop()
