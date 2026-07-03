@@ -144,6 +144,10 @@ void printData(float time)
 /******************************************************************* */
 void setup()
 {
+    // declare cloud variables and functions
+
+    //   **** NEED THIS CODE ****
+
     // initializations
     Serial.begin(9600);
     greenLED.begin();
