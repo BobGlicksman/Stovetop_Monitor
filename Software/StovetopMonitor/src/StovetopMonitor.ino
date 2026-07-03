@@ -52,16 +52,16 @@
 
 ********************************************************************************************************/
 
-#define VERSION 1.0
+#define VER "1.0"
 
 // Include Particle Device OS APIs
-#include <Particle.h
+#include <Particle.h>
 
 // Include MLX90614 library
 #include <Adafruit_MLX90614.h>
 
 // include the TPP LED and Button libraries
-#include "LEDControlClass.h"
+#include "LEDcontrolClass.h"
 #include "BtnStatusClass.h"
 
 // Include the constants for the Stovetop_Monitor project
@@ -90,11 +90,11 @@ BtnStatusClass resetBtn(ALARM_RESET);
 
 // Global variables
 //  Cloud variables
-int timeInState;           // in minutes
-double irTemperature;      // in degrees F
-double ambientTemperature; // in degrees F
-String currentState;       // "Normal", "Warming", "Cooking", "Burning", "Alarm"
-String version = VERSION;
+int timeInState = 0;               // in minutes
+double irTemperature = 0.0;        // in degrees F
+double ambientTemperature = 0.0;   // in degrees F
+String currentState = "Undefined"; // "Normal", "Warming", "Cooking", "Burning", "Alarm"
+String version = VER;
 
 //  Other globals
 unsigned long loggingTimeMillis; // beginning millis() time for data sampling
@@ -103,8 +103,8 @@ enum State
     NORM,
     WARM,
     COOK,
-    BURN
-        ALARM
+    BURN,
+    ALARM
 };
 
 State systemState; // The current state of the system - not the string to publish to the cloud!
@@ -118,7 +118,7 @@ void resetAlarm()
     systemState = NORM;
 } // end of resetAlarm()
 
-// Function to refresh all of the LEDs
+// Function to refresh all of the LEDs and buzzer
 void refreshAll()
 {
     greenLED.refresh();
@@ -134,20 +134,61 @@ void printData(float time)
     Serial.print(time);
     Serial.print(" minutes\t");
     Serial.print("Ambient = ");
-    Serial.print(mlx.readAmbientTempF());
+    Serial.print(ambientTemperature);
     Serial.print("*F\tObject = ");
-    Serial.print(mlx.readObjectTempF());
+    Serial.print(irTemperature);
     Serial.println("*F");
 
 } // end of printData()
 
+/******************************************************************* */
 void setup()
 {
+    // initializations
+    Serial.begin(9600);
+    greenLED.begin();
+    yellowLED.begin();
+    redLED.begin();
+    buzzer.begin();
+    mlx.begin();
+
+    // set flashing rates for this program
+    greenLED.setRate(200);
+    yellowLED.setRate(200);
+    redLED.setRate(200);
+    buzzer.setRate(200);
+
+    // turn on the green LED until Photon 2 connected to the Particle cloud
+    greenLED.on();
+    yellowLED.off();
+    redLED.off();
+    buzzer.off();
+    refreshAll();
+
+    waitUntil(Particle.connected);
+
+    // turn on all LEDs and turn the buzzer off - selftest
+    greenLED.on();
+    yellowLED.on();
+    redLED.on();
+    buzzer.off();
+    refreshAll();
+
+    // wait a few seconds to open the serial monitor
+    delay(2000);
+
+    // set the initial state of the system to NORM
+    systemState = NORM;
+    currentState = "Normal";
+    Serial.println("Stovetop Monitor Data.");
+    Serial.println("Ready ....");
+    loggingTimeMillis = millis();
 
 } // end of setup()
 
 void loop()
 {
+    // determine if it is time to sample new IR sensor data
     unsigned long intervalMills;
     static float intervalMinutes = 0.0f;
 
@@ -156,9 +197,22 @@ void loop()
     if (intervalMills >= RECORDING_INTERVAL)
     {
         intervalMinutes += ((float)(intervalMills) / 60000.0f);
+
+        // update global variables
+        irTemperature = mlx.readObjectTempF();
+        ambientTemperature = mlx.readAmbientTempF();
+
         printData(intervalMinutes);
 
         loggingTimeMillis = millis();
     }
+
+    // state machine for system behaviour
+
+    // update time in state
+
+    // update current state as string
+
+    // refresh LEDs and buzzer.
 
 } // end of loop()
