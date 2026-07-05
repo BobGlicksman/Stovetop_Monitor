@@ -43,16 +43,17 @@
     - I2C bus pullup resistors (the MLX90614 breakout board has its own pullup resistors)
 
   Author:  Bob Glicksman
-  Date: 7/03/26
+  Date: 7/05/26
 
-  Version 1.0.  7/03/26. Initial release for testing
+  Version 0.9.  7/05/26. Work in progress.  Need: (1) Particle.publsih() alarm messages;
+                     (2) get reset btn working.
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
 
 ********************************************************************************************************/
 
-#define VER "1.0"
+#define VER "0.9"
 
 // Include Particle Device OS APIs
 #include <Particle.h>
@@ -90,7 +91,7 @@ BtnStatusClass resetBtn(ALARM_RESET);
 
 // Global variables
 //  Cloud variables
-int timeInState = 0;               // in minutes
+double timeInState = 0.0;          // in minutes
 double irTemperature = 0.0;        // in degrees F
 double ambientTemperature = 0.0;   // in degrees F
 String currentState = "Undefined"; // "Normal", "Warming", "Cooking", "Burning", "Alarm"
@@ -113,9 +114,11 @@ State systemState; // The current state of the system - not the string to publis
 // Functions
 
 // Cloud function to reset the system to the NORM state
-void resetAlarm()
+int resetAlarm(String noString)
 {
     systemState = NORM;
+    return systemState;
+
 } // end of resetAlarm()
 
 // Function to refresh all of the LEDs and buzzer
@@ -128,15 +131,15 @@ void refreshAll()
 } // end of refreshAll()
 
 // Function to log data to the serial monitor
-void printData(float time)
+void printData(float time, double ir, double amb)
 {
     Serial.print("Time = ");
     Serial.print(time);
     Serial.print(" minutes\t");
     Serial.print("Ambient = ");
-    Serial.print(ambientTemperature);
+    Serial.print(amb);
     Serial.print("*F\tObject = ");
-    Serial.print(irTemperature);
+    Serial.print(ir);
     Serial.println("*F");
 
 } // end of printData()
@@ -145,8 +148,13 @@ void printData(float time)
 void setup()
 {
     // declare cloud variables and functions
+    Particle.variable("Time in current state (minutes)", timeInState);
+    Particle.variable("IR Temperature (deg F)", irTemperature);
+    Particle.variable("Ambient temperature (deg F)", ambientTemperature);
+    Particle.variable("Current State", currentState);
+    Particle.variable("Version", version);
 
-    //   **** NEED THIS CODE ****
+    Particle.function("Reset", resetAlarm);
 
     // initializations
     Serial.begin(9600);
@@ -192,31 +200,229 @@ void setup()
 
 void loop()
 {
-    // determine if it is time to sample new IR sensor data
-    unsigned long intervalMills;
-    static float intervalMinutes = 0.0f;
+
+    static unsigned long intervalMills;     // time interval for the next sensor reading
+    static float intervalMinutes = 0.0f;    // time interval converted to minutes
+    static double newIRtemp;                // IR value from the sensor - unfiltered
+    static double newAmbtemp;               // Ambient value from the sensor - unfiltered
+    static unsigned long baseTimeInState;   // millis() value when entering a new state
+    static unsigned long millisTimeInState; // current time in the current state, in milliseconds
 
     intervalMills = millis() - loggingTimeMillis;
 
+    // determine if it is time to sample new IR sensor data
     if (intervalMills >= RECORDING_INTERVAL)
     {
         intervalMinutes += ((float)(intervalMills) / 60000.0f);
 
-        // update global variables
-        irTemperature = mlx.readObjectTempF();
-        ambientTemperature = mlx.readAmbientTempF();
+        // read out the sensor and update global variables
+        newIRtemp = mlx.readObjectTempF();
+        newAmbtemp = mlx.readAmbientTempF();
+        printData(intervalMinutes, newIRtemp, newAmbtemp); // print out the original data, even the errors
 
-        printData(intervalMinutes);
+        //  test that readings are valid; if not valid, skip the update
+        if ((newIRtemp < 1000.0) && (newAmbtemp < 1000.0))
+        {
+            irTemperature = newIRtemp;
+            ambientTemperature = newAmbtemp;
+        }
 
         loggingTimeMillis = millis();
     }
 
     // state machine for system behaviour
+    switch (systemState)
+    {
+    case (NORM):
+
+        // set normal state indicators
+        greenLED.on();
+        yellowLED.off();
+        redLED.off();
+        buzzer.off();
+
+        // don't need to update time in state for NORMal state
+
+        if ((irTemperature - ambientTemperature) >= WARM_UP_TH)
+        {
+            systemState = WARM;
+            baseTimeInState = millis(); // initialize the time in the new state
+        }
+        else
+        {
+            // stay in the NORMal state
+            systemState = NORM;
+        }
+
+        break;
+
+    case (WARM):
+
+        // set the warming state indicators
+        greenLED.off();
+        yellowLED.on();
+        redLED.off();
+        buzzer.off();
+
+        // update the time in state
+        millisTimeInState = millis() - baseTimeInState;
+        timeInState = (double)(millisTimeInState) / 60000.0;
+
+        if (timeInState >= WARM_ALARM_TIME)
+        { // enter ALARM state
+            systemState = ALARM;
+            baseTimeInState = millis(); // initialize the time in the new state
+        }
+        else
+        { // no alarm, monitor the temperature to exit the state
+            if ((irTemperature - ambientTemperature) >= COOK_UP_TH)
+            { // enter the COOK state
+                systemState = COOK;
+                baseTimeInState = millis();
+            }
+            else
+            {
+                if ((irTemperature - ambientTemperature) <= WARM_DN_TH)
+                { // back to the NORM state
+                    systemState = NORM;
+                    baseTimeInState = millis();
+                }
+                else
+                { // we remain in the current state
+                    systemState = WARM;
+                }
+            }
+        }
+
+        break;
+
+    case (COOK):
+        // set the cooking state indicators
+        greenLED.off();
+        yellowLED.flash();
+        redLED.off();
+        buzzer.off();
+
+        // update the time in state
+        millisTimeInState = millis() - baseTimeInState;
+        timeInState = (double)(millisTimeInState) / 60000.0;
+
+        if (timeInState >= COOK_ALARM_TIME)
+        { // enter ALARM state
+            systemState = ALARM;
+            baseTimeInState = millis(); // initialize the time in the new state
+        }
+        else
+        { // no alarm, monitor the temperature to exit the state
+            if ((irTemperature - ambientTemperature) >= BURN_UP_TH)
+            { // enter the BURN state
+                systemState = BURN;
+                baseTimeInState = millis();
+            }
+            else
+            {
+                if ((irTemperature - ambientTemperature) <= COOK_DN_TH)
+                { // back to the WARM state
+                    systemState = WARM;
+                    baseTimeInState = millis();
+                }
+                else
+                { // we remain in the current state
+                    systemState = COOK;
+                }
+            }
+        }
+        break;
+
+    case (BURN):
+        // set the burning state indicators
+        greenLED.off();
+        yellowLED.off();
+        redLED.on();
+        buzzer.off();
+
+        // update the time in state
+        millisTimeInState = millis() - baseTimeInState;
+        timeInState = (double)(millisTimeInState) / 60000.0;
+
+        if (timeInState >= BURN_ALARM_TIME)
+        { // enter ALARM state
+            systemState = ALARM;
+            baseTimeInState = millis(); // initialize the time in the new state
+        }
+        else
+        { // no alarm, monitor the temperature to exit the state
+
+            if ((irTemperature - ambientTemperature) <= COOK_DN_TH)
+            { // back to the COOK state
+                systemState = WARM;
+                baseTimeInState = millis();
+            }
+            else
+            { // we remain in the current state
+                systemState = BURN;
+            }
+        }
+        break;
+
+    case (ALARM):
+        // set the alarming state indicators
+        greenLED.off();
+        yellowLED.off();
+        redLED.flash();
+        buzzer.flash();
+
+        // update the time in state
+        millisTimeInState = millis() - baseTimeInState;
+        timeInState = (double)(millisTimeInState) / 60000.0;
+
+        // stay in ALARM state until the state variable is reset
+        systemState = ALARM;
+        break;
+
+    default:                    // should never get here
+        resetAlarm("noString"); // just return to the NORMal state
+        break;
+    }
 
     // update time in state
 
     // update current state as string
+    switch (systemState)
+    {
+    case (NORM):
+        currentState = "NORMAL";
+        break;
+
+    case (WARM):
+        currentState = "WARMING";
+        break;
+
+    case (COOK):
+        currentState = "COOKING";
+        break;
+
+    case (BURN):
+        currentState = "BURNING";
+        break;
+
+    case (ALARM):
+        currentState = "ALARM";
+        break;
+
+    default:
+        currentState = "UNDEFINED";
+        break;
+    }
 
     // refresh LEDs and buzzer.
+    refreshAll();
+
+    // monitor for alarm reset button pressed
+    if (resetBtn.isPressed() == true)
+    { // reset the system to the NORMal state using the push button
+        Serial.println("RESET the alarm");
+        resetAlarm("noString");
+    }
 
 } // end of loop()
