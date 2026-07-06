@@ -43,17 +43,16 @@
     - I2C bus pullup resistors (the MLX90614 breakout board has its own pullup resistors)
 
   Author:  Bob Glicksman
-  Date: 7/05/26
+  Date: 7/06/26
 
-  Version 0.9.  7/05/26. Work in progress.  Need: (1) Particle.publsih() alarm messages;
-                     (2) get reset btn working.
+  Version 0.9.9  7/06/26. Preliminary release for testingWork in progress.
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
 
 ********************************************************************************************************/
 
-#define VER "0.9"
+#define VER "0.9.9"
 
 // Include Particle Device OS APIs
 #include <Particle.h>
@@ -162,6 +161,7 @@ void setup()
     yellowLED.begin();
     redLED.begin();
     buzzer.begin();
+    resetBtn.begin();
     mlx.begin();
 
     // set flashing rates for this program
@@ -270,6 +270,7 @@ void loop()
 
         if (timeInState >= WARM_ALARM_TIME)
         { // enter ALARM state
+            Particle.publish("stovetopAlarm", "Alarm from WARM", PRIVATE);
             systemState = ALARM;
             baseTimeInState = millis(); // initialize the time in the new state
         }
@@ -309,12 +310,13 @@ void loop()
 
         if (timeInState >= COOK_ALARM_TIME)
         { // enter ALARM state
+            Particle.publish("stovetopAlarm", "Alarm from COOK", PRIVATE);
             systemState = ALARM;
             baseTimeInState = millis(); // initialize the time in the new state
         }
         else
         { // no alarm, monitor the temperature to exit the state
-            if ((irTemperature - ambientTemperature) >= BURN_UP_TH)
+            if ((irTemperature) >= BURN_UP_TH)
             { // enter the BURN state
                 systemState = BURN;
                 baseTimeInState = millis();
@@ -347,13 +349,14 @@ void loop()
 
         if (timeInState >= BURN_ALARM_TIME)
         { // enter ALARM state
+            Particle.publish("stovetopAlarm", "Alarm from BURN", PRIVATE);
             systemState = ALARM;
             baseTimeInState = millis(); // initialize the time in the new state
         }
         else
         { // no alarm, monitor the temperature to exit the state
 
-            if ((irTemperature - ambientTemperature) <= COOK_DN_TH)
+            if ((irTemperature) <= BURN_DN_TH)
             { // back to the COOK state
                 systemState = WARM;
                 baseTimeInState = millis();
@@ -376,8 +379,15 @@ void loop()
         millisTimeInState = millis() - baseTimeInState;
         timeInState = (double)(millisTimeInState) / 60000.0;
 
-        // stay in ALARM state until the state variable is reset
-        systemState = ALARM;
+        // test for alarm reset button pressed
+        if (resetBtn.isPressed() == true)
+        {
+            resetAlarm("noString");
+        }
+        else
+        {
+            systemState = ALARM;
+        }
         break;
 
     default:                    // should never get here
@@ -417,12 +427,5 @@ void loop()
 
     // refresh LEDs and buzzer.
     refreshAll();
-
-    // monitor for alarm reset button pressed
-    if (resetBtn.isPressed() == true)
-    { // reset the system to the NORMal state using the push button
-        Serial.println("RESET the alarm");
-        resetAlarm("noString");
-    }
 
 } // end of loop()

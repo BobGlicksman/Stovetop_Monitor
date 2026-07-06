@@ -9,13 +9,13 @@
  *****************************************************************************************************/
 
 // Thresholds for state transitions.
-#define WARM_UP_TH 1.5   //  Threshold for transitioning from NORM to WARM when warming up; in deg F
-#define COOK_UP_TH 7.0   //  Threshold for transitioning from WARM to COOK when warming up; in deg F
-#define BURN_UP_TH 130.0 //  Threshold for transitioning from COOK to BURN when warming up; in deg F
+#define WARM_UP_TH 1.5  //  Threshold for transitioning from NORM to WARM when warming up; in deg F
+#define COOK_UP_TH 7.0  //  Threshold for transitioning from WARM to COOK when warming up; in deg F
+#define BURN_UP_TH 91.0 //  Threshold for transitioning from COOK to BURN when warming up; in deg F
 
-#define WARM_DN_TH 1.0   //  Threshold for transitioning from WARM to NORM when cooling down; in deg F
-#define COOK_DN_TH 6.0   //  Threshold for transitioning from COOK to WARM when cooling down; in deg F
-#define BURN_DN_TH 125.0 //  Threshold for transitioning from BURN to COOK when cooling down; in deg F
+#define WARM_DN_TH 1.0  //  Threshold for transitioning from WARM to NORM when cooling down; in deg F
+#define COOK_DN_TH 6.0  //  Threshold for transitioning from COOK to WARM when cooling down; in deg F
+#define BURN_DN_TH 90.0 //  Threshold for transitioning from BURN to COOK when cooling down; in deg F
 
 // timeouts for alarm
 #define WARM_ALARM_TIME 1 // Minutes in WARM state before alarm
