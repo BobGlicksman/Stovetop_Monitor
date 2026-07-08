@@ -45,7 +45,7 @@
   Author:  Bob Glicksman
   Date: 7/06/26
 
-  Version 0.9.9  7/06/26. Preliminary release for testingWork in progress.
+  Version 0.9.9  7/08/26. Preliminary release for testingWork in progress.
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
@@ -183,7 +183,7 @@ void setup()
     greenLED.on();
     yellowLED.on();
     redLED.on();
-    buzzer.off();
+    buzzer.on();
     refreshAll();
 
     // wait a few seconds to open the serial monitor
