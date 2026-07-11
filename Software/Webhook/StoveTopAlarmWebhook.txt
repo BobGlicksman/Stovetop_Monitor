@@ -1,0 +1,19 @@
+{
+    "name": "Stovetop Alarm for Pushover",
+    "event": "stovetopAlarm",
+    "disabled": false,
+    "template": "webhook",
+    "url": "https://api.pushover.net/1/messages.json",
+    "requestType": "POST",
+    "noDefaults": true,
+    "rejectUnauthorized": true,
+    "unchunked": false,
+    "data_url_response_event": false,
+    "form": {
+        "token": "<< your Pushover API token >>",
+        "user": "<< your Pushover User access code >>",
+        "message": "{{{PARTICLE_EVENT_VALUE}}}",
+        "sound": "alien"
+    },
+    "product_ids": []
+}
