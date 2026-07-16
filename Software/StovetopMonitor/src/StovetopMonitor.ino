@@ -45,14 +45,16 @@
   Author:  Bob Glicksman
   Date: 7/06/26
 
+  Version 1.0.0  7/16/26.  Initial release with operational constants
   Version 0.9.9  7/08/26. Preliminary release for testingWork in progress.
+
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
 
 ********************************************************************************************************/
 
-#define VER "0.9.9"
+#define VER "1.0.0"
 
 // Include Particle Device OS APIs
 #include <Particle.h>
@@ -65,8 +67,8 @@
 #include "BtnStatusClass.h"
 
 // Include the constants for the Stovetop_Monitor project
-#include "TestStovetopConstants.h" // used for TESTING ONLY
-// #include "StovetopConstants.h"  // constants for the electric stovetop
+// #include "TestStovetopConstants.h" // used for TESTING ONLY
+#include "ElectricStovetopConstants.h" // constants for the electric stovetop
 
 // Photon 2 pin definitions for this project
 #define GREEN_LED D4
