@@ -45,14 +45,17 @@
   Author:  Bob Glicksman
   Date: 7/06/26
 
+  Version 1.1.0  7/19/26.  Made cloud variable names without spaces and converted to formatted strings.
+  Version 1.0.0  7/16/26.  Initial release with operational constants
   Version 0.9.9  7/08/26. Preliminary release for testingWork in progress.
+
 
   (c) 2026 Bob Glicksman, Jim Schrempp, Team Practical Projects.
   All rights reserved.
 
 ********************************************************************************************************/
 
-#define VER "0.9.9"
+#define VER "1.1.0"
 
 // Include Particle Device OS APIs
 #include <Particle.h>
@@ -65,8 +68,8 @@
 #include "BtnStatusClass.h"
 
 // Include the constants for the Stovetop_Monitor project
-#include "TestStovetopConstants.h" // used for TESTING ONLY
-// #include "StovetopConstants.h"  // constants for the electric stovetop
+// #include "TestStovetopConstants.h" // used for TESTING ONLY
+#include "ElectricStovetopConstants.h" // constants for the electric stovetop
 
 // Photon 2 pin definitions for this project
 #define GREEN_LED D4
@@ -90,11 +93,15 @@ BtnStatusClass resetBtn(ALARM_RESET);
 
 // Global variables
 //  Cloud variables
-double timeInState = 0.0;          // in minutes
-double irTemperature = 0.0;        // in degrees F
-double ambientTemperature = 0.0;   // in degrees F
+double timeInState = 0.0;        // in minutes
+double irTemperature = 0.0;      // in degrees F
+double ambientTemperature = 0.0; // in degrees F
+
 String currentState = "Undefined"; // "Normal", "Warming", "Cooking", "Burning", "Alarm"
 String version = VER;
+String strTimeInState = "0";
+String strIrTemperature = "undefined";
+String strAmbientTemperature = "undefined";
 
 //  Other globals
 unsigned long loggingTimeMillis; // beginning millis() time for data sampling
@@ -111,6 +118,13 @@ State systemState; // The current state of the system - not the string to publis
 
 /************************************************* */
 // Functions
+
+// Function to covert double to formatted string
+String dtos(double val)
+{
+    String s = String::format("%.2f", val);
+    return s;
+}
 
 // Cloud function to reset the system to the NORM state
 int resetAlarm(String noString)
@@ -147,10 +161,10 @@ void printData(float time, double ir, double amb)
 void setup()
 {
     // declare cloud variables and functions
-    Particle.variable("Time in current state (minutes)", timeInState);
-    Particle.variable("IR Temperature (deg F)", irTemperature);
-    Particle.variable("Ambient temperature (deg F)", ambientTemperature);
-    Particle.variable("Current State", currentState);
+    Particle.variable("Time", strTimeInState);
+    Particle.variable("IRTemp", strIrTemperature);
+    Particle.variable("AmbientTemp", strAmbientTemperature);
+    Particle.variable("CurrentState", currentState);
     Particle.variable("Version", version);
 
     Particle.function("Reset", resetAlarm);
@@ -224,7 +238,9 @@ void loop()
         if ((newIRtemp < 1000.0) && (newAmbtemp < 1000.0))
         {
             irTemperature = newIRtemp;
+            strIrTemperature = dtos(irTemperature);
             ambientTemperature = newAmbtemp;
+            strAmbientTemperature = dtos(ambientTemperature);
         }
 
         loggingTimeMillis = millis();
@@ -267,6 +283,7 @@ void loop()
         // update the time in state
         millisTimeInState = millis() - baseTimeInState;
         timeInState = (double)(millisTimeInState) / 60000.0;
+        strTimeInState = dtos(timeInState);
 
         if (timeInState >= WARM_ALARM_TIME)
         { // enter ALARM state
@@ -307,6 +324,7 @@ void loop()
         // update the time in state
         millisTimeInState = millis() - baseTimeInState;
         timeInState = (double)(millisTimeInState) / 60000.0;
+        strTimeInState = dtos(timeInState);
 
         if (timeInState >= COOK_ALARM_TIME)
         { // enter ALARM state
@@ -346,6 +364,7 @@ void loop()
         // update the time in state
         millisTimeInState = millis() - baseTimeInState;
         timeInState = (double)(millisTimeInState) / 60000.0;
+        strTimeInState = dtos(timeInState);
 
         if (timeInState >= BURN_ALARM_TIME)
         { // enter ALARM state
@@ -378,6 +397,7 @@ void loop()
         // update the time in state
         millisTimeInState = millis() - baseTimeInState;
         timeInState = (double)(millisTimeInState) / 60000.0;
+        strTimeInState = dtos(timeInState);
 
         // test for alarm reset button pressed
         if (resetBtn.isPressed() == true)
