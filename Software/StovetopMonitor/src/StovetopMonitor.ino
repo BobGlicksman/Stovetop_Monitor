@@ -259,6 +259,7 @@ void loop()
         buzzer.off();
 
         // don't need to update time in state for NORMal state
+        strTimeInState = "0";
 
         if ((irTemperature - ambientTemperature) >= WARM_UP_TH)
         {
