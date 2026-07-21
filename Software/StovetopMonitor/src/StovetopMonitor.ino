@@ -45,6 +45,7 @@
   Author:  Bob Glicksman
   Date: 7/06/26
 
+  Version 1.2.0  7/21/26.  Minor bug fixes
   Version 1.1.0  7/19/26.  Made cloud variable names without spaces and converted to formatted strings.
   Version 1.0.0  7/16/26.  Initial release with operational constants
   Version 0.9.9  7/08/26. Preliminary release for testingWork in progress.
@@ -55,7 +56,7 @@
 
 ********************************************************************************************************/
 
-#define VER "1.1.0"
+#define VER "1.2.0"
 
 // Include Particle Device OS APIs
 #include <Particle.h>
@@ -92,11 +93,11 @@ LEDcontrolClass buzzer(BUZZER);
 BtnStatusClass resetBtn(ALARM_RESET);
 
 // Global variables
-//  Cloud variables
 double timeInState = 0.0;        // in minutes
 double irTemperature = 0.0;      // in degrees F
 double ambientTemperature = 0.0; // in degrees F
 
+// Cloud Variables
 String currentState = "Undefined"; // "Normal", "Warming", "Cooking", "Burning", "Alarm"
 String version = VER;
 String strTimeInState = "0";
@@ -377,7 +378,7 @@ void loop()
 
             if ((irTemperature) <= BURN_DN_TH)
             { // back to the COOK state
-                systemState = WARM;
+                systemState = COOK;
                 baseTimeInState = millis();
             }
             else
@@ -402,6 +403,7 @@ void loop()
         // test for alarm reset button pressed
         if (resetBtn.isPressed() == true)
         {
+            baseTimeInState = millis(); // initialize the time in the new state
             resetAlarm("noString");
         }
         else
