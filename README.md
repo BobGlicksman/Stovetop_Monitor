@@ -40,7 +40,7 @@ See the "Stovetop_Monitor_Overview_and_Theory_of_Operation" document in this Rep
 - "Stovetop_Monitor_User_Manual":  Instructions for using the Stovetop Monitor, both locally and remotely.
 ### Hardware Folder.
 - 3D CAD .stl files for the 3D printed enclosure and top mounting bracket.
-- Fusion 360 .f3d file so modifying the enclosure design in Fusion 360 CAD software.
+- Fusion 360 .f3d file to allow modifying the enclosure design in Fusion 360 CAD software.
 - MLX90614 IR temperature sensor datasheet.
 - "A NOTE ABOUT PIEZO BUZZERS.txt": Options for the piezo buzzer that provides the audible alarm capability of the Stovetop Monitor.
 ### Software Folder.
