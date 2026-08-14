@@ -45,7 +45,7 @@ See the "Stovetop_Monitor_Overview_and_Theory_of_Operation" document in this Rep
 - "A NOTE ABOUT PIEZO BUZZERS.txt": Options for the piezo buzzer that provides the audible alarm capability of the Stovetop Monitor.
 ### Software Folder.
 #### AI2_App.
-MIT App Inventor 2 source code and .apk installation file for the ANdroid App that is part of this project.
+MIT App Inventor 2 source code and .apk installation file for the Android App that is part of this project.
 #### StovetopMonitor.
 Source code, libraries and helper files for the Photon 2 microcontroller.
 #### Webhook.
